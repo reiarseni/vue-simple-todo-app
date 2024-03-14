@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+  <meta charset="UTF-8">
+  <title>Simple ToDo app</title>  
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+
+    .completado {
+        text-decoration:line-through;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div id="todo-app">
+      <h1>{{ header }}</h1>   
+      <p>{{ contenido }}</p>   
+      <input v-model="tarea" v-on:keyup.enter="agregar" type="text" placeholder="Escribe una tarea y presiona enter">
+      <ol>
+        <transition-group name="list" tag="ul"></transition-group>
+            <li v-for="item in items" :key="item.id"> 
+                <span :class="(item.completada) ? 'completado' : ''">{{ item.label }}  ({{ item.prioridad }})</span> 
+                <i class="fa-solid fa-check" @click="completar(item)"></i>
+                <i class="fa-solid fa-trash-can" @click="borrar(item.id)"></i>        
+            </li>
+        </transition-group>
+      </ol>
+  </div>    
+    
+  <!-- Script cdn vue -->
+  <script src="https://unpkg.com/vue@3"></script>
+
+  <!-- vue app -->
+  <script>
+    const ToDoApp = Vue.createApp({
+        data() 
+        {
+            return {
+                header: 'Tareas pendientes',
+                contenido: 'Me gusta usar VueJS',
+                tarea: '',
+                
+                items:[
+                    {id: 1, label:'Comprar leche', completada: false, prioridad: 'Alta'},
+                    {id: 2, label:'Aprender VueJS', completada: false, prioridad: 'Media'},
+                    {id: 3, label:'Pagar la tarjeta de credito', completada: false, prioridad: 'Baja'}
+                ]
+            }
+        },
+        mounted()  
+        {
+            if (localStorage.getItem('tareas')) 
+            {
+                try {
+                    this.items = JSON.parse(localStorage.getItem('tareas'));
+                    this.ordenar();
+                } catch(e) {
+                    localStorage.removeItem('tareas');
+                }
+            }
+        },
+        methods:
+        {
+            agregar()
+            {
+                if (this.tarea == '') {
+                    return;
+                }
+                this.items.push({'id':Date.now(),'label':this.tarea, 'completada':false, prioridad: 'Baja'});
+                this.tarea = '';  
+                this.ordenar(); 
+                this.guardar();               
+            },
+            borrar(id)
+            {
+                this.items = this.items.filter(el => el.id !== id);    
+                this.guardar();             
+            },
+            completar(tarea)
+            {
+                tarea.completada = !tarea.completada;   
+                this.ordenar();  
+                this.guardar();           
+            },
+            ordenar()
+            {
+                this.items = this.items.sort((a, b) => {
+                    if (a.completada == false && b.completada == false) {
+                        return 0
+                    }
+
+                    if (a.completada == false) {
+                        return -1;
+                    }
+
+                    if (a.completada == true) {
+                        return 1;
+                    }
+                });
+            },
+            guardar()   
+            {
+                const parsed = JSON.stringify(this.items);
+                localStorage.setItem('tareas', parsed);
+            }
+        }
+    }).mount('#todo-app')
+
+  </script>
+</body>
+
+</html>
